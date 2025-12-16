@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 消費分類工具</title>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+.overlay {
+    background-color: rgba(0,0,0,0.6);
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.7);
+}
+h1 {
+    text-align:center;
+    font-weight:700;
+    font-size:2.5rem;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+}
+input[type="text"] {
+    width: 70%;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 1rem;
+    margin-right: 10px;
+}
+button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: none;
+    background-color: #ff9800;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #e68900;
+}
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: rgba(255,255,255,0.2);
+}
+tr:nth-child(even) {
+    background-color: rgba(255,255,255,0.1);
+}
+</style>
+</head>
+<body>
+<div class="overlay">
+    <div class="container">
+        <h1>AI 消費分類工具</h1>
+        <div>
+            <input type="text" id="expenseInput" placeholder="例：咖啡 50">
+            <button onclick="addExpense()">送出</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>分類</th>
+                    <th>金額</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTable">
+            </tbody>
+        </table>
+        <h3>分類總計</h3>
+        <ul id="totalsList"></ul>
+    </div>
+</div>
+
+<script>
+let totals = { 飲料:0, 餐飲:0, 交通:0, 其他:0 };
+let records = JSON.parse(localStorage.getItem("expenses")) || [];
+
+function render(){
+    const tbody = document.getElementById("expenseTable");
+    tbody.innerHTML = "";
+    records.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${r.item}</td><td>${r.category}</td><td>${r.amount} 元</td>`;
+        tbody.appendChild(tr);
+    });
+
+    const ul = document.getElementById("totalsList");
+    ul.innerHTML = "";
+    for(let cat in totals){
+        ul.innerHTML += `<li>${cat}: ${totals[cat]} 元</li>`;
+    }
+}
+
+function addExpense(){
+    const input = document.getElementById("expenseInput").value.trim();
+    const parts = input.split(" ");
+    if(parts.length != 2) return alert("請輸入格式：項目 金額");
+
+    const [item, amountStr] = parts;
+    const amount = parseFloat(amountStr);
+    if(isNaN(amount)) return alert("金額必須是數字");
+
+    let category = "其他";
+    if(/咖啡|茶|奶茶/.test(item)) category = "飲料";
+    else if(/便當|牛排|漢堡|餐|飯/.test(item)) category = "餐飲";
+    else if(/公車|捷運|計程車|交通/.test(item)) category = "交通";
+
+    totals[category] += amount;
+    records.push({ item, category, amount });
+    localStorage.setItem("expenses", JSON.stringify(records));
+
+    document.getElementById("expenseInput").value = "";
+    render();
+}
+
+// 初始化渲染
+records.forEach(r => totals[r.category] += r.amount);
+render();
+</script>
+</body>
+</html>
